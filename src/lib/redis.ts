@@ -41,6 +41,7 @@ export function createRedis(url: string, role: RedisRole, logger: Logger): Redis
 
   const state = createConnectionState(logger, 'Redis');
   redis.on('error', (error) => state.down(error));
+  redis.on('reconnecting', () => state.down());
   redis.on('ready', () => state.up());
   return redis;
 }
