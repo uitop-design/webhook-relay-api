@@ -199,7 +199,7 @@ The app validates its configuration at startup and exits with a readable error i
 docker compose up -d --build
 ```
 
-This starts PostgreSQL (host port `5438`) and Redis (`6383`), then runs migrations and the seed once, then starts the API on **http://localhost:3500** and the worker. The compose file sets `ALLOW_PRIVATE_URLS=true` so you can try the service against a receiver on your machine through `http://host.docker.internal:<port>`. Retry settings can be changed through environment variables, for example `RETRY_BASE_MS=200 docker compose up -d`.
+This starts PostgreSQL (host port `5438`) and Redis (`6383`), then runs migrations and the seed once, then starts the API on **http://localhost:3500** and the worker. The compose file always sets `ALLOW_PRIVATE_URLS=true` (it is not read from `.env`), so you can try the service against a receiver on your machine through `http://host.docker.internal:<port>`. Retry settings can be changed through environment variables, for example `RETRY_BASE_MS=200 docker compose up -d`.
 
 The seed adds three endpoints on `https://example.com/hooks/...` and three events whose deliveries are in `SUCCEEDED`, `FAILED` and `DEAD` states. It writes these rows straight into the database and sends nothing.
 
