@@ -1,8 +1,10 @@
 import { buildApp } from './app.js';
 import { loadConfig, loadEnvFile } from './config.js';
 import { createDatabase } from './db/client.js';
+import { createTargetResolver } from './delivery/url-guard.js';
 import { createLogger } from './lib/logger.js';
 import { createRedis } from './lib/redis.js';
+import { createEndpointsService } from './modules/endpoints/service.js';
 import { createHealthService } from './modules/health/service.js';
 
 loadEnvFile();
@@ -11,10 +13,12 @@ const logger = createLogger(config, 'api');
 
 const { db, pool } = createDatabase(config.DATABASE_URL);
 const redis = createRedis(config.REDIS_URL, 'client', logger);
+const resolveTarget = createTargetResolver({ allowPrivate: config.ALLOW_PRIVATE_URLS });
 
 const app = await buildApp({
   logger,
   services: {
+    endpoints: createEndpointsService({ db, resolveTarget }),
     health: createHealthService({ db, redis }),
   },
 });

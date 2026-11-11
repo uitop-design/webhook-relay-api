@@ -4,6 +4,8 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
+import { endpointsRoutes } from './modules/endpoints/routes.js';
+import type { EndpointsService } from './modules/endpoints/service.js';
 import { healthRoutes } from './modules/health/routes.js';
 import type { HealthService } from './modules/health/service.js';
 import errorHandler from './plugins/error-handler.js';
@@ -12,6 +14,7 @@ import swagger from './plugins/swagger.js';
 export const BODY_LIMIT_BYTES = 256 * 1024;
 
 export interface AppServices {
+  endpoints: EndpointsService;
   health: HealthService;
 }
 
@@ -36,6 +39,7 @@ export async function buildApp({ services, logger }: BuildAppOptions): Promise<F
 
   await app.register(
     async (api) => {
+      await api.register(endpointsRoutes, { prefix: '/endpoints', service: services.endpoints });
       await api.register(healthRoutes, { prefix: '/health', service: services.health });
     },
     { prefix: '/api' },

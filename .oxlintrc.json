@@ -15,7 +15,8 @@
     "typescript/consistent-type-imports": "error",
     "eqeqeq": "error",
     "import/no-cycle": "error",
-    "unicorn/prefer-node-protocol": "error"
+    "unicorn/prefer-node-protocol": "error",
+    "oxc/no-async-endpoint-handlers": "off"
   },
   "ignorePatterns": ["dist", "coverage", "drizzle", "node_modules"]
 }
