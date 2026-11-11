@@ -117,18 +117,24 @@ export function createDeliveryProcessor({
       nextAttemptAt: null,
     };
 
+    const removed = () => {
+      logger.info({ deliveryId }, 'Delivery was deleted during the attempt');
+      return 'SKIPPED' as const;
+    };
+
     if (succeeded) {
-      await store.recordAttempt(record);
+      if (!(await store.recordAttempt(record))) return removed();
       logger.info({ deliveryId, attemptNo, statusCode }, 'Delivery succeeded');
       return 'SUCCEEDED';
     }
 
     if (gone || exhausted) {
-      await store.recordAttempt({
+      const saved = await store.recordAttempt({
         ...record,
         status: 'DEAD',
         ...(gone ? { deactivateEndpointId: endpoint.id } : {}),
       });
+      if (!saved) return removed();
       logger.warn(
         { deliveryId, attemptNo, statusCode, endpointId: endpoint.id, gone },
         gone ? 'Endpoint is gone, deactivated' : 'Delivery exhausted retries',
@@ -137,11 +143,12 @@ export function createDeliveryProcessor({
     }
 
     const delayMs = retryDelay(attemptNo, config.RETRY_BASE_MS);
-    await store.recordAttempt({
+    const saved = await store.recordAttempt({
       ...record,
       status: 'FAILED',
       nextAttemptAt: new Date(now().getTime() + delayMs),
     });
+    if (!saved) return removed();
     logger.info({ deliveryId, attemptNo, statusCode, delayMs }, 'Delivery failed, retry scheduled');
     throw new RetryDeliveryError(error ?? 'Delivery failed', delayMs);
   };

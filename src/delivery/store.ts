@@ -30,7 +30,7 @@ export interface AttemptRecord {
 
 export interface DeliveryStore {
   load(deliveryId: string): Promise<DeliveryContext | undefined>;
-  recordAttempt(record: AttemptRecord): Promise<void>;
+  recordAttempt(record: AttemptRecord): Promise<boolean>;
   markDead(deliveryId: string, error: string): Promise<void>;
   findStalePending(createdBefore: Date, limit: number): Promise<string[]>;
 }
@@ -48,15 +48,8 @@ export function createDeliveryStore(db: Database): DeliveryStore {
     },
 
     async recordAttempt(record) {
-      await db.transaction(async (tx) => {
-        await tx.insert(deliveryAttempts).values({
-          deliveryId: record.deliveryId,
-          attemptNo: record.attemptNo,
-          statusCode: record.statusCode,
-          durationMs: record.durationMs,
-          error: record.error,
-        });
-        await tx
+      return db.transaction(async (tx) => {
+        const [updated] = await tx
           .update(deliveries)
           .set({
             status: record.status,
@@ -65,13 +58,24 @@ export function createDeliveryStore(db: Database): DeliveryStore {
             lastStatusCode: record.statusCode,
             lastError: record.error,
           })
-          .where(eq(deliveries.id, record.deliveryId));
+          .where(eq(deliveries.id, record.deliveryId))
+          .returning({ id: deliveries.id });
+        if (!updated) return false;
+
+        await tx.insert(deliveryAttempts).values({
+          deliveryId: record.deliveryId,
+          attemptNo: record.attemptNo,
+          statusCode: record.statusCode,
+          durationMs: record.durationMs,
+          error: record.error,
+        });
         if (record.deactivateEndpointId) {
           await tx
             .update(endpoints)
             .set({ active: false })
             .where(eq(endpoints.id, record.deactivateEndpointId));
         }
+        return true;
       });
     },
 
