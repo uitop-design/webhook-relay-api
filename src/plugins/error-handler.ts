@@ -86,7 +86,10 @@ async function errorHandlerPlugin(app: FastifyInstance): Promise<void> {
     if (payload.statusCode >= 500) {
       request.log.error({ err: error }, 'Unhandled error');
     } else {
-      request.log.info({ err: error, statusCode: payload.statusCode }, 'Request failed');
+      request.log.info(
+        { statusCode: payload.statusCode, reason: payload.message },
+        'Request rejected',
+      );
     }
     return reply.status(payload.statusCode).send(payload);
   });
