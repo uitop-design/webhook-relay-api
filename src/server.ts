@@ -5,6 +5,7 @@ import { createDeliveryQueue } from './delivery/queue.js';
 import { createTargetResolver } from './delivery/url-guard.js';
 import { createLogger } from './lib/logger.js';
 import { createRedis } from './lib/redis.js';
+import { createDeliveriesService } from './modules/deliveries/service.js';
 import { createEndpointsService } from './modules/endpoints/service.js';
 import { createEventsService } from './modules/events/service.js';
 import { createHealthService } from './modules/health/service.js';
@@ -23,6 +24,7 @@ const app = await buildApp({
   services: {
     endpoints: createEndpointsService({ db, resolveTarget }),
     events: createEventsService({ db, queue, logger }),
+    deliveries: createDeliveriesService({ db, queue, logger }),
     health: createHealthService({ db, redis }),
   },
 });

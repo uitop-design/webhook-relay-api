@@ -4,6 +4,8 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
+import { deliveriesRoutes } from './modules/deliveries/routes.js';
+import type { DeliveriesService } from './modules/deliveries/service.js';
 import { endpointsRoutes } from './modules/endpoints/routes.js';
 import type { EndpointsService } from './modules/endpoints/service.js';
 import { eventsRoutes } from './modules/events/routes.js';
@@ -18,6 +20,7 @@ export const BODY_LIMIT_BYTES = 256 * 1024;
 export interface AppServices {
   endpoints: EndpointsService;
   events: EventsService;
+  deliveries: DeliveriesService;
   health: HealthService;
 }
 
@@ -44,6 +47,10 @@ export async function buildApp({ services, logger }: BuildAppOptions): Promise<F
     async (api) => {
       await api.register(endpointsRoutes, { prefix: '/endpoints', service: services.endpoints });
       await api.register(eventsRoutes, { prefix: '/events', service: services.events });
+      await api.register(deliveriesRoutes, {
+        prefix: '/deliveries',
+        service: services.deliveries,
+      });
       await api.register(healthRoutes, { prefix: '/health', service: services.health });
     },
     { prefix: '/api' },
